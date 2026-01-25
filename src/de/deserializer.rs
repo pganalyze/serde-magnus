@@ -1,7 +1,7 @@
 use magnus::{
     exception,
     value::{qnil, Qfalse, Qtrue, ReprValue},
-    Fixnum, Float, RArray, RBignum, RHash, RString, Symbol, Value,
+    Fixnum, Float, RArray, RBignum, RHash, RString, Symbol, Time, Value,
 };
 
 use serde::forward_to_deserialize_any;
@@ -66,12 +66,19 @@ impl<'i> serde::Deserializer<'i> for Deserializer {
             return visitor.visit_map(HashDeserializer::new(hash)?);
         }
 
+        if let Some(time) = Time::from_value(self.value) {
+            return visitor.visit_str(&time.inspect());
+        }
+
+        let class = unsafe { self.value.classname() }.into_owned();
+
+        if class == "ActiveSupport::TimeWithZone" {
+            return visitor.visit_str(&self.value.to_string());
+        }
+
         Err(Error::new(
             exception::type_error(),
-            format!(
-                "can't deserialize {}",
-                unsafe { self.value.classname() }.into_owned()
-            ),
+            format!("can't deserialize {class}"),
         ))
     }
 
