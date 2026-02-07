@@ -51,7 +51,7 @@ impl<'r, 'i> serde::Deserializer<'i> for Deserializer<'r> {
         }
 
         if let Some(string) = RString::from_value(self.value) {
-            return visitor.visit_str(string.to_string()?.as_str());
+            return visitor.visit_string(string.to_string()?);
         }
 
         if let Some(symbol) = Symbol::from_value(self.value) {
